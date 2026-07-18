@@ -26,6 +26,7 @@ impl RuleManager {
                 .0
                 .iter()
                 .take_while(|entry| entry.date <= date)
+                .filter(|entry| self.cache.get(&entry.id).is_none())
                 .for_each(|entry| {
                     deps.insert(RequestType::Any(Request::LoadRule(entry.id)));
                 }),
@@ -43,6 +44,7 @@ impl RuleManager {
 
     pub fn load_rule(&mut self, id: RuleId, storage: Arc<dyn Storage>) -> Response {
         match self.cache.entry(id) {
+            // must be from previous pass due to dedup
             hash_map::Entry::Occupied(v) if v.get().is_loading() => {}
             hash_map::Entry::Occupied(_) => return Response::empty(), // short circuiting
             hash_map::Entry::Vacant(v) => {

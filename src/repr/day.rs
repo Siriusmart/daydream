@@ -64,6 +64,7 @@ impl DayManager {
         rules: &RuleManager,
     ) -> Response {
         match self.cache.entry(date) {
+            // must be from previous pass due to dedup
             hash_map::Entry::Occupied(v) if v.get().is_loading() => {}
             hash_map::Entry::Occupied(_) => return Response::empty(), // short circuiting
             hash_map::Entry::Vacant(v) => {
@@ -124,6 +125,7 @@ impl DayManager {
 
     pub fn load_day_raw(&mut self, date: NaiveDate, storage: Arc<dyn Storage>) -> Response {
         match self.raw_cache.entry(date) {
+            // must be from previous pass due to dedup
             hash_map::Entry::Occupied(v) if v.get().is_loading() => {}
             hash_map::Entry::Occupied(_) => {
                 return Response::empty(); // short circuit
@@ -160,6 +162,7 @@ impl DayManager {
 
     pub fn generate_new_day_raw(&mut self, date: NaiveDate, rules: &RuleManager) -> Response {
         match self.raw_cache.get(&date) {
+            // must be from previous pass due to dedup
             Some(Resource::Loading) => {}
             Some(Resource::Loaded(_)) => return Response::empty(), // short circuiting
             Some(Resource::Failed(_)) => todo!(),

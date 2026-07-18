@@ -29,6 +29,7 @@ pub struct DiffManager {
 impl DiffManager {
     pub fn load_diff(&mut self, date: NaiveDate, rules: &RuleManager) -> Response {
         match self.cache.entry(date) {
+            // must be from previous pass due to dedup
             hash_map::Entry::Occupied(v) if v.get().is_loading() => {}
             hash_map::Entry::Occupied(_) => return Response::empty(), // short circuiting
             hash_map::Entry::Vacant(v) => {
@@ -76,6 +77,7 @@ impl DiffManager {
 
     pub fn load_diff_raw(&mut self, date: NaiveDate, storage: Arc<dyn Storage>) -> Response {
         match self.raw_cache.entry(date) {
+            // must be from previous pass due to dedup
             hash_map::Entry::Occupied(v) if v.get().is_loading() => {}
             hash_map::Entry::Occupied(_) => return Response::empty(), // short circuit
             hash_map::Entry::Vacant(v) => {
