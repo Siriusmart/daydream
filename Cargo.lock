@@ -3014,6 +3014,7 @@ dependencies = [
 [[package]]
 name = "task-dag"
 version = "0.1.0"
+source = "git+https://github.com/Siriusmart/task-dag-rs?rev=6c634fa#6c634fa223f6db658ead38230b60bf7077ef05ed"
 
 [[package]]
 name = "tempfile"
