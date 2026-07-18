@@ -1,0 +1,20 @@
+[package]
+name = "daydream"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+async-trait = "0.1.89"
+chrono = { version = "0.4.45", features = ["serde"] }
+dirs = "6.0.0"
+env_logger = "0.11.11"
+iced = { git = "https://github.com/iced-rs/iced", features = [ "tokio", "canvas" ] }
+linked-hash-map = "0.5.6"
+linked_hash_set = { version = "0.1.6", features = ["serde"] }
+log = "0.4.33"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.150"
+tokio = { version = "1.52.3", features = ["rt", "rt-multi-thread", "macros", "fs", "io-util"] }
+uuid = { version = "1.23.4", features = ["v4"] }
+# task-dag = { git = "https://github.com/Siriusmart/task-dag-rs" }
+task-dag = { path = "../task-dag" }
