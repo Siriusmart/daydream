@@ -225,3 +225,16 @@ impl DayManager {
         Ok(())
     }
 }
+
+impl Day {
+    pub fn apply(mut self, diff: &Diff) -> Self {
+        let old = std::mem::take(&mut self.entries);
+
+        self.entries = LinkedHashSet::from_iter(
+            old.into_iter()
+                .filter(|entry| !diff.removed_entries.contains(&entry.id)),
+        );
+
+        self
+    }
+}

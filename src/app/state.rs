@@ -143,10 +143,8 @@ impl App {
             Request::LoadDayRaw(date) => self.days.load_day_raw(date, self.storage.clone()),
             Request::CacheDayRaw(date, value) => self.days.cache_day_raw(date, value),
 
-            Request::LoadDiff(date) => self.diffs.load_diff(date, &self.rules),
+            Request::LoadDiff(date) => self.diffs.load_diff(date, self.storage.clone()),
             Request::CacheDiff(date, value) => self.diffs.cache_diff(date, value),
-            Request::LoadDiffRaw(date) => self.diffs.load_diff_raw(date, self.storage.clone()),
-            Request::CacheDiffRaw(date, diff) => self.diffs.cache_diff_raw(date, diff),
 
             Request::LoadRuleIndex => self.rules.load_rule_index(self.storage.clone()),
             Request::CacheRuleIndex(value) => self.rules.cache_rule_index(value),
@@ -161,14 +159,21 @@ impl App {
     }
 
     pub fn view(&self) -> Element<'_, RequestWrapper> {
-        match self.days.get(&self.view_state.board.date) {
-            None => text("not loaded").into(),
-            Some(Resource::Loading) => text("loading").into(),
-            Some(Resource::Failed(err)) => text!("failed {err:?}").into(),
-            Some(Resource::Loaded(day)) => Canvas::new(Board::new(day, &self.rules))
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .into(),
+        match (
+            self.days.get(&self.view_state.board.date),
+            self.diffs.get(&self.view_state.board.date),
+        ) {
+            (None, _) | (_, None) => text("not loaded").into(),
+            (Some(day), Some(diff)) => match day.and_ref(diff) {
+                Resource::Loaded((day, diff)) => {
+                    Canvas::new(Board::new(day.clone().apply(&diff), &self.rules))
+                        .width(Length::Fill)
+                        .height(Length::Fill)
+                        .into()
+                }
+                Resource::Loading => text("loading").into(),
+                Resource::Failed(err) => text!("{err}").into(),
+            },
         }
     }
 }

@@ -9,12 +9,12 @@ use crate::{
 };
 
 pub struct Board<'a> {
-    day: &'a Day,
+    day: Day,
     rules: &'a RuleManager,
 }
 
 impl<'a> Board<'a> {
-    pub fn new(day: &'a Day, rules: &'a RuleManager) -> Self {
+    pub fn new(day: Day, rules: &'a RuleManager) -> Self {
         Self { day, rules }
     }
 }

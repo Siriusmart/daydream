@@ -21,7 +21,7 @@ impl RuleManager {
         let mut deps = HashSet::new();
 
         match &self.index {
-            Some(Resource::Failed(_)) => todo!(),
+            Some(Resource::Failed(err)) => todo!("{err}"),
             Some(Resource::Loaded(index)) => index
                 .0
                 .iter()
@@ -119,7 +119,8 @@ pub struct RuleId(Uuid);
 pub struct Rule {
     id: RuleId,
     label: String,
-    duration: Duration,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    target_duration: Option<Duration>,
     colour: Colour,
     recurrence: Recurrence,
     first_occurence: NaiveDate,
@@ -278,7 +279,7 @@ impl RuleManager {
             Some(bytes) => {
                 Ok::<Rule, Box<dyn Error + Send + Sync>>(serde_json::from_slice(&bytes)?)
             }
-            None => todo!(),
+            None => todo!("rule not found"),
         }
     }
 
@@ -318,7 +319,7 @@ impl RuleManager {
             .all(|entry| {
                 self.get(&entry.id).is_some_and(|value| match value {
                     Resource::Loading => false,
-                    Resource::Failed(_) => todo!(),
+                    Resource::Failed(err) => todo!("{err}"),
                     Resource::Loaded(_) => true,
                 })
             })

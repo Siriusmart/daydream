@@ -69,4 +69,22 @@ impl<T: Clone + Debug + Hash + PartialEq + Eq> Resource<T> {
             Self::Failed(err) => Resource::Failed(err),
         }
     }
+
+    pub fn and_ref<'a, U: Clone + Debug + Hash + PartialEq + Eq>(
+        &'a self,
+        other: &'a Resource<U>,
+    ) -> Resource<(&'a T, &'a U)> {
+        match self {
+            Self::Loading => match other {
+                Resource::Failed(err) => Resource::Failed(err.clone()),
+                _ => Resource::Loading,
+            },
+            Self::Loaded(t) => match other {
+                Resource::Loading => Resource::Loading,
+                Resource::Loaded(u) => Resource::Loaded((t, u)),
+                Resource::Failed(err) => Resource::Failed(err.clone()),
+            },
+            Self::Failed(err) => Resource::Failed(err.clone()),
+        }
+    }
 }

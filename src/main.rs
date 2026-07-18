@@ -12,7 +12,11 @@ use iced::Task;
 
 fn main() -> iced::Result {
     env_logger::init();
-    let storage = Arc::new(FsStorage::new(PathBuf::from("test")));
+    let storage = Arc::new(FsStorage::new(
+        dirs::data_local_dir()
+            .unwrap()
+            .join("daydream/projects/main"),
+    ));
     iced::application(
         move || {
             (

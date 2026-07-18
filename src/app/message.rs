@@ -42,8 +42,6 @@ pub enum Request {
     CacheDayRaw(NaiveDate, Resource<Day>),
     LoadDiff(NaiveDate),
     CacheDiff(NaiveDate, Resource<Diff>),
-    LoadDiffRaw(NaiveDate),
-    CacheDiffRaw(NaiveDate, Resource<Diff>),
 
     LoadRuleIndex,
     CacheRuleIndex(Resource<UpcomingRuleIndex>),
