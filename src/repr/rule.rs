@@ -121,7 +121,6 @@ pub struct Rule {
     label: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     target_duration: Option<Duration>,
-    colour: Colour,
     recurrence: Recurrence,
     first_occurence: NaiveDate,
     /// Date of last occurence (inclusive)
@@ -133,6 +132,10 @@ pub struct Rule {
 simple_id!(Rule);
 
 impl Rule {
+    pub fn label(&self) -> &str {
+        &self.label
+    }
+
     pub fn id(&self) -> RuleId {
         self.id
     }

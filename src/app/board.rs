@@ -1,26 +1,45 @@
+use std::collections::HashMap;
+
 use iced::{Color, Point, Rectangle, Renderer, Size, Theme, Vector, mouse, widget::canvas::*};
 
 use crate::{
     app::message::{Request, RequestWrapper},
     repr::{
         day::{Day, DayManager},
-        rule::RuleManager,
+        rule::{Rule, RuleId, RuleManager},
     },
 };
 
-pub struct Board<'a> {
-    day: Day,
-    rules: &'a RuleManager,
+pub enum BoardState {
+    Rect { start: Point },
 }
 
-impl<'a> Board<'a> {
-    pub fn new(day: Day, rules: &'a RuleManager) -> Self {
-        Self { day, rules }
+pub struct Board {
+    day: Day,
+    rules: HashMap<RuleId, Rule>,
+}
+
+impl Board {
+    pub fn new(day: Day, rules: &RuleManager) -> Self {
+        Self {
+            rules: day.extract_rules(rules),
+            day,
+        }
     }
 }
 
-impl<'a> Program<RequestWrapper> for Board<'a> {
+impl<'a> Program<RequestWrapper> for Board {
     type State = ();
+
+    fn update(
+        &self,
+        _state: &mut Self::State,
+        _event: &Event,
+        _bounds: Rectangle,
+        _cursor: mouse::Cursor,
+    ) -> Option<Action<RequestWrapper>> {
+        None
+    }
 
     fn draw(
         &self,
@@ -31,7 +50,7 @@ impl<'a> Program<RequestWrapper> for Board<'a> {
         _cursor: mouse::Cursor,
     ) -> Vec<Geometry> {
         self.day
-            .draw(self.rules, renderer, bounds)
+            .draw(&self.rules, renderer, bounds)
             .into_iter()
             .map(|frame| frame.into_geometry())
             .collect()

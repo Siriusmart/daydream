@@ -1,13 +1,20 @@
-use std::{hash::Hash, time::Duration};
+use std::{collections::HashMap, hash::Hash, time::Duration};
 
 use chrono::NaiveDateTime;
-use iced::{Color, Point, Rectangle, Renderer, Size, Vector, widget::canvas::Frame};
+use iced::{
+    Color, Font, Pixels, Point, Rectangle, Renderer, Size,
+    widget::{
+        canvas::{self, Frame},
+        text::{Ellipsis, Wrapping},
+    },
+};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
     macros::simple_id,
     repr::{
+        common::Vector,
         rule::{Rule, RuleId},
         sticker::{Sticker, StickerKind},
     },
@@ -24,26 +31,53 @@ pub struct Entry {
 }
 
 impl Entry {
-    pub fn draw(&self, renderer: &Renderer, bounds: Rectangle) -> Frame {
+    pub fn draw(
+        &self,
+        renderer: &Renderer,
+        bounds: Rectangle,
+        rules: &HashMap<RuleId, Rule>,
+    ) -> Frame {
         let mut frame = Frame::new(renderer, bounds.size());
-        frame.translate(Vector {
-            x: bounds.width / 2.0 + self.sticker.origin.x,
-            y: bounds.height / 2.0 + self.sticker.origin.y,
-        });
 
         match self.sticker.shape {
-            StickerKind::Rect => {
-                frame.fill_rectangle(
-                    Point {
-                        x: -100.0,
-                        y: -100.0,
-                    },
-                    Size {
-                        width: 200.0,
-                        height: 200.0,
-                    },
-                    Color::from_rgb(1.0, 0.0, 0.0),
+            StickerKind::Memo => {
+                let text_bounds = iced::Rectangle::new(
+                    iced::Point::from(
+                        (self.sticker.origin - Vector::new(0.2, 0.2)).into_raw(bounds),
+                    ),
+                    iced::Size::from(Vector::new(0.4, 0.4).into_raw(bounds)),
                 );
+
+                frame.with_clip(Rectangle::new(Point::ORIGIN, frame.size()), |frame| {
+                    frame.fill_rectangle(
+                        iced::Point::from(
+                            (self.sticker.origin - Vector::new(0.21, 0.21)).into_raw(bounds),
+                        ),
+                        iced::Size::from(Vector::new(0.42, 0.42).into_raw(bounds)),
+                        iced::Color::from(self.sticker.colour.secondary()),
+                    );
+                    frame.fill_rectangle(
+                        text_bounds.position(),
+                        text_bounds.size(),
+                        iced::Color::from(self.sticker.colour.primary()),
+                    );
+                });
+
+                frame.with_clip(text_bounds, |frame| {
+                    frame.translate(iced::Vector::new(text_bounds.x, text_bounds.y));
+                    frame.fill_text(canvas::Text {
+                        content: rules
+                            .get(&self.id)
+                            .expect("rule loaded")
+                            .label()
+                            .to_string(),
+                        position: iced::Point::ORIGIN,
+                        max_width: text_bounds.width,
+                        size: Pixels::from(text_bounds.height / 6.0),
+                        wrapping: Wrapping::Word,
+                        ..Default::default()
+                    });
+                });
             }
         }
 

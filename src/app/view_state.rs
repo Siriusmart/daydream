@@ -1,7 +1,12 @@
+use std::collections::HashMap;
+
 use chrono::{Local, NaiveDate};
 
 use crate::{
-    app::message::{Request, RequestType, Response},
+    app::{
+        board::Board,
+        message::{Request, RequestType, Response},
+    },
     repr::{day::DayManager, resource::Resource},
 };
 
@@ -29,12 +34,14 @@ pub struct ViewState {
 
 pub struct BoardViewState {
     pub date: NaiveDate,
+    pub boards: HashMap<NaiveDate, Board>,
 }
 
 impl Default for BoardViewState {
     fn default() -> Self {
         Self {
             date: Local::now().date_naive(),
+            boards: HashMap::new(),
         }
     }
 }

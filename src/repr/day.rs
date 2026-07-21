@@ -7,7 +7,6 @@ use std::{
 use chrono::{Local, NaiveDate};
 use iced::{Rectangle, Renderer, widget::canvas::Frame};
 use linked_hash_map::LinkedHashMap;
-use linked_hash_set::LinkedHashSet;
 use log::warn;
 use serde::{Deserialize, Serialize};
 
@@ -18,7 +17,7 @@ use crate::{
         diff::{Diff, DiffManager},
         entry::Entry,
         resource::Resource,
-        rule::{Rule, RuleManager},
+        rule::{Rule, RuleId, RuleManager},
         storage::Storage,
     },
 };
@@ -35,7 +34,7 @@ pub struct DayManager {
 pub struct Day {
     id: NaiveDate,
     /// in order access time, later is higher in layer
-    entries: LinkedHashSet<Entry>,
+    entries: LinkedHashMap<RuleId, Entry>,
 }
 
 simple_id!(Day);
@@ -44,15 +43,35 @@ impl Day {
     pub fn new(date: NaiveDate) -> Self {
         Self {
             id: date,
-            entries: LinkedHashSet::new(),
+            entries: LinkedHashMap::new(),
         }
     }
 
-    pub fn draw(&self, rules: &RuleManager, renderer: &Renderer, bounds: Rectangle) -> Vec<Frame> {
+    pub fn draw(
+        &self,
+        rules: &HashMap<RuleId, Rule>,
+        renderer: &Renderer,
+        bounds: Rectangle,
+    ) -> Vec<Frame> {
         self.entries
-            .iter()
-            .map(|entry| entry.draw(renderer, bounds))
+            .values()
+            .map(|entry| entry.draw(renderer, bounds, rules))
             .collect()
+    }
+
+    pub fn extract_rules(&self, rules: &RuleManager) -> HashMap<RuleId, Rule> {
+        HashMap::from_iter(
+            self.entries
+                .values()
+                .map(|entry| (entry.id, rules.get(&entry.id).expect("rule to be loaded")))
+                .map(|(id, resource)| {
+                    if let Resource::Loaded(v) = resource {
+                        (id, v.clone())
+                    } else {
+                        panic!("rule not loaded")
+                    }
+                }),
+        )
     }
 }
 
@@ -84,9 +103,9 @@ impl DayManager {
             }
             Some(Resource::Failed(_)) => todo!(),
             Some(Resource::Loaded(day)) => {
-                day.entries.iter().for_each(|entry| {
-                    if rules.get(&entry.id).is_none() {
-                        deps.insert(RequestType::Any(Request::LoadRule(entry.id)));
+                day.entries.keys().for_each(|entry_id| {
+                    if rules.get(entry_id).is_none() {
+                        deps.insert(RequestType::Any(Request::LoadRule(*entry_id)));
                     }
                 });
             }
@@ -176,7 +195,9 @@ impl DayManager {
         let rules = rules.get_loaded_matches(date);
         let day = Day {
             id: date,
-            entries: LinkedHashSet::from_iter(rules.into_iter().map(Entry::new)),
+            entries: LinkedHashMap::from_iter(
+                rules.into_iter().map(|rule| (rule.id(), Entry::new(rule))),
+            ),
         };
 
         Response::retry_fresh(Request::CacheDayRaw(date, Resource::Loaded(day)))
@@ -230,9 +251,9 @@ impl Day {
     pub fn apply(mut self, diff: &Diff) -> Self {
         let old = std::mem::take(&mut self.entries);
 
-        self.entries = LinkedHashSet::from_iter(
+        self.entries = LinkedHashMap::from_iter(
             old.into_iter()
-                .filter(|entry| !diff.removed_entries.contains(&entry.id)),
+                .filter(|(_, entry)| !diff.removed_entries.contains(&entry.id)),
         );
 
         self

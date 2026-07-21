@@ -9,7 +9,7 @@ chrono = { version = "0.4.45", features = ["serde"] }
 dirs = "6.0.0"
 env_logger = "0.11.11"
 iced = { git = "https://github.com/iced-rs/iced", features = [ "tokio", "canvas" ] }
-linked-hash-map = "0.5.6"
+linked-hash-map = { version = "0.5.6", features = ["serde_impl"] }
 linked_hash_set = { version = "0.1.6", features = ["serde"] }
 log = "0.4.33"
 serde = { version = "1.0.228", features = ["derive"] }

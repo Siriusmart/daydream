@@ -9,8 +9,6 @@ use crate::repr::{
     rule::{Rule, RuleId, UpcomingRuleIndex},
 };
 
-pub struct MessageId(u64);
-
 #[derive(Debug)]
 pub struct RequestWrapper {
     pub response_to: Option<Request>,
