@@ -121,6 +121,18 @@ impl Add<Self> for Vector {
     }
 }
 
+
+impl Sub<Self> for Vector {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
+    }
+}
+
 impl Vector {
     pub fn new(x: f32, y: f32) -> Self {
         Self { x, y }

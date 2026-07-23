@@ -51,9 +51,26 @@ impl Entry {
         match self.sticker.shape {
             StickerKind::Rect { width, height } => {
                 let dimensions = Vector::new(width, height);
+                if height < 0.02 || width < 0.02 {
+                    frame.fill_rectangle(
+                        iced::Point::from(
+                            (self.sticker.origin - dimensions / 2.0 - Vector::new(0.01, 0.01))
+                                .into_raw(bounds),
+                        ),
+                        iced::Size::from((dimensions + Vector::new(0.02, 0.02)).into_raw(bounds)),
+                        iced::Color::from(self.sticker.colour.secondary()),
+                    );
+                    return;
+                }
+
                 let text_bounds = iced::Rectangle::new(
-                    iced::Point::from((self.sticker.origin - dimensions / 2.0).into_raw(bounds)),
-                    iced::Size::from(Vector::new(width, height).into_raw(bounds)),
+                    iced::Point::from(
+                        (self.sticker.origin - dimensions / 2.0 + Vector::new(0.01, 0.01))
+                            .into_raw(bounds),
+                    ),
+                    iced::Size::from(
+                        (Vector::new(width, height) - Vector::new(0.02, 0.02)).into_raw(bounds),
+                    ),
                 );
 
                 frame.with_clip(Rectangle::new(Point::ORIGIN, frame.size()), |frame| {
@@ -73,7 +90,7 @@ impl Entry {
                 });
 
                 frame.with_clip(text_bounds, |frame| {
-                    if text_bounds.height < 10.0 { // prevent 0 line height causes crashes
+                    if text_bounds.height < 10.0 {
                         return;
                     }
 
