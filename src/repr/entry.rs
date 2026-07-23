@@ -65,7 +65,7 @@ impl Entry {
 
                 frame.with_clip(text_bounds, |frame| {
                     frame.translate(iced::Vector::new(text_bounds.x, text_bounds.y));
-                    frame.fill_text(canvas::Text {
+                    let text = canvas::Text {
                         content: rules
                             .get(&self.id)
                             .expect("rule loaded")
@@ -76,7 +76,8 @@ impl Entry {
                         size: Pixels::from(text_bounds.height / 6.0),
                         wrapping: Wrapping::Word,
                         ..Default::default()
-                    });
+                    };
+                    text.draw_with(|path, color| frame.fill(&path, color));
                 });
             }
         }

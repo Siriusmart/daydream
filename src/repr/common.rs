@@ -39,6 +39,15 @@ impl Point {
         )
     }
 
+    pub fn from_raw(point: iced::Point, bounds: Rectangle) -> Self {
+        let scaling_factor = bounds.height / 2.0;
+
+        Self {
+            x: (point.x - bounds.width / 2.0) / scaling_factor,
+            y: (point.y - bounds.height / 2.0) / scaling_factor,
+        }
+    }
+
     pub fn new(x: f32, y: f32) -> Self {
         Self { x, y }
     }

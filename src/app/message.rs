@@ -1,6 +1,7 @@
 use std::{collections::HashSet, pin::Pin};
 
 use chrono::NaiveDate;
+use uuid::Uuid;
 
 use crate::repr::{
     day::Day,
@@ -28,13 +29,17 @@ impl RequestWrapper {
 pub enum Request {
     /// asserts response_to is Some
     RetryWithDeps(Vec<RequestType>),
+    DoWithDeps(Vec<RequestType>, Vec<RequestType>),
     Do(Vec<RequestType>),
+    /// a dummy task to act as a join
+    Label(Uuid),
     Empty,
 
     ShowDay(NaiveDate),
     LoadDay(NaiveDate),
     CacheDay(NaiveDate, Resource<Day>),
     LoadDayRaw(NaiveDate),
+    AddRuleToDays(Rule),
 
     GenerateNewDayRaw(NaiveDate),
     CacheDayRaw(NaiveDate, Resource<Day>),
@@ -43,9 +48,19 @@ pub enum Request {
 
     LoadRuleIndex,
     CacheRuleIndex(Resource<UpcomingRuleIndex>),
+    // SaveRuleIndex,
     LoadAllRulesUntilInclude(NaiveDate),
     LoadRule(RuleId),
     CacheRule(RuleId, Resource<Rule>),
+    // SaveRule(RuleId),
+    /// assert: canont create rule with start date earlier than today
+    CreateRule(Rule),
+}
+
+impl Request {
+    pub fn label() -> Self {
+        Self::Label(Uuid::new_v4())
+    }
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]

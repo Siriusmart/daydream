@@ -40,6 +40,10 @@ pub struct Day {
 simple_id!(Day);
 
 impl Day {
+    pub fn id(&self) -> NaiveDate {
+        self.id
+    }
+
     pub fn new(date: NaiveDate) -> Self {
         Self {
             id: date,
@@ -125,10 +129,8 @@ impl DayManager {
 
         if deps.is_empty() {
             if let Some(Resource::Loaded(day)) = day_raw {
-                return Response::retry_fresh(Request::CacheDay(
-                    date,
-                    Resource::Loaded(day.clone()),
-                ));
+                self.cache.insert(date, Resource::Loaded(day.clone()));
+                return Response::empty()
             } else {
                 unreachable!("already asserted day is loaded")
             }
@@ -200,7 +202,33 @@ impl DayManager {
             ),
         };
 
-        Response::retry_fresh(Request::CacheDayRaw(date, Resource::Loaded(day)))
+        self.raw_cache.insert(date, Resource::Loaded(day));
+
+        Response::empty()
+    }
+    
+    pub fn add_rule_to_days(&mut self, rule: Rule) -> Response {
+        for (date, day) in self.raw_cache.iter_mut() {
+            if !rule.is_on_day(*date) {
+                continue;
+            }
+
+            if let Resource::Loaded(day) = day {
+                day.entries.insert(rule.id(), Entry::new(&rule));
+            }
+        }
+
+        for (date, day) in self.cache.iter_mut() {
+            if !rule.is_on_day(*date) {
+                continue;
+            }
+
+            if let Resource::Loaded(day) = day {
+                day.entries.insert(rule.id(), Entry::new(&rule));
+            }
+        }
+
+        Response::empty()
     }
 }
 

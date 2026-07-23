@@ -13,7 +13,13 @@ use uuid::Uuid;
 use crate::{
     app::message::{Request, RequestType, Response},
     macros::simple_id,
-    repr::{common::Colour, entry::Entry, resource::Resource, sticker::Sticker, storage::Storage},
+    repr::{
+        common::{Colour, Point},
+        entry::Entry,
+        resource::Resource,
+        sticker::{Sticker, StickerColours, StickerKind},
+        storage::Storage,
+    },
 };
 
 impl RuleManager {
@@ -96,6 +102,28 @@ impl RuleManager {
         self.index = Some(index);
         Response::empty()
     }
+
+    pub fn create_rule(&mut self, rule: Rule) -> Response {
+        let index = match &mut self.index {
+            Some(Resource::Loading) | None => return Response::retry_any(Request::LoadRuleIndex),
+            Some(Resource::Failed(e)) => panic!("{e}"),
+            Some(Resource::Loaded(index)) => index,
+        };
+
+        index.0.insert(RuleIndexEntry {
+            date: rule.first_occurence,
+            id: rule.id,
+        });
+
+        let rule_id = rule.id;
+        self.cache.insert(rule.id(), Resource::Loaded(rule.clone()));
+
+        Response::value(Request::Do(vec![
+            // RequestType::Fresh(Request::SaveRuleIndex),
+            // RequestType::Fresh(Request::SaveRule(rule_id)),
+            RequestType::Fresh(Request::AddRuleToDays(rule))
+        ]))
+    }
 }
 
 pub struct RuleManager {
@@ -115,6 +143,12 @@ impl Default for RuleManager {
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, Serialize, Deserialize, PartialOrd, Ord)]
 pub struct RuleId(Uuid);
 
+impl RuleId {
+    fn generate() -> Self {
+        Self(Uuid::new_v4())
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Rule {
     id: RuleId,
@@ -130,6 +164,52 @@ pub struct Rule {
 }
 
 simple_id!(Rule);
+
+impl Rule {
+    pub fn new(first_occurence: NaiveDate) -> Self {
+        Self {
+            id: RuleId::generate(),
+            label: String::new(),
+            target_duration: None,
+            recurrence: Recurrence::Once,
+            first_occurence,
+            cut_off: None,
+            default_sticker: Sticker {
+                shape: StickerKind::Memo,
+                origin: Point::new(0.0, 0.0),
+                colour: StickerColours {
+                    primary: Colour {
+                        r: 1.0,
+                        g: 0.0,
+                        b: 0.0,
+                        a: 1.0,
+                    },
+                    secondary: None,
+                },
+            },
+        }
+    }
+
+    pub fn with_label(mut self, label: String) -> Self {
+        self.label = label;
+        self
+    }
+
+    pub fn with_target_duration(mut self, target_duration: Option<Duration>) -> Self {
+        self.target_duration = target_duration;
+        self
+    }
+
+    pub fn with_cutoff(mut self, cutoff: Option<NaiveDate>) -> Self {
+        self.cut_off = cutoff;
+        self
+    }
+
+    pub fn with_default_sticker(mut self, default_sticker: Sticker) -> Self {
+        self.default_sticker = default_sticker;
+        self
+    }
+}
 
 impl Rule {
     pub fn label(&self) -> &str {
