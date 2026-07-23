@@ -1,4 +1,4 @@
-use std::ops::{Add, Sub};
+use std::ops::{Add, Div, Sub};
 
 use iced::{Color, Rectangle};
 use serde::{Deserialize, Serialize};
@@ -51,6 +51,13 @@ impl Point {
     pub fn new(x: f32, y: f32) -> Self {
         Self { x, y }
     }
+
+    pub fn average(points: &[Point]) -> Self {
+        Self {
+            x: points.iter().map(|point| point.x).sum::<f32>() / (points.len() as f32),
+            y: points.iter().map(|point| point.y).sum::<f32>() / (points.len() as f32),
+        }
+    }
 }
 
 impl Add<Vector> for Point {
@@ -75,9 +82,43 @@ impl Sub<Vector> for Point {
     }
 }
 
+impl Sub<Point> for Point {
+    type Output = Vector;
+
+    fn sub(self, rhs: Point) -> Self::Output {
+        Vector {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
 pub struct Vector {
     pub x: f32,
     pub y: f32,
+}
+
+impl Div<f32> for Vector {
+    type Output = Self;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        Self {
+            x: self.x / rhs,
+            y: self.y / rhs,
+        }
+    }
+}
+
+impl Add<Self> for Vector {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            x: rhs.x + self.x,
+            y: rhs.y + self.y,
+        }
+    }
 }
 
 impl Vector {
@@ -88,5 +129,12 @@ impl Vector {
     pub fn into_raw(&self, bounds: Rectangle) -> (f32, f32) {
         let scaling_factor = bounds.height / 2.0;
         (self.x * scaling_factor, self.y * scaling_factor)
+    }
+
+    pub fn abs_component(&self) -> Self {
+        Self {
+            x: self.x.abs(),
+            y: self.y.abs(),
+        }
     }
 }

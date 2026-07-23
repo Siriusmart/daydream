@@ -38,8 +38,61 @@ impl Entry {
         rules: &HashMap<RuleId, Rule>,
     ) -> Frame {
         let mut frame = Frame::new(renderer, bounds.size());
+        self.draw_with_frame(&mut frame, bounds, rules);
+        frame
+    }
 
+    pub fn draw_with_frame(
+        &self,
+        frame: &mut Frame,
+        bounds: Rectangle,
+        rules: &HashMap<RuleId, Rule>,
+    ) {
         match self.sticker.shape {
+            StickerKind::Rect { width, height } => {
+                let dimensions = Vector::new(width, height);
+                let text_bounds = iced::Rectangle::new(
+                    iced::Point::from((self.sticker.origin - dimensions / 2.0).into_raw(bounds)),
+                    iced::Size::from(Vector::new(width, height).into_raw(bounds)),
+                );
+
+                frame.with_clip(Rectangle::new(Point::ORIGIN, frame.size()), |frame| {
+                    frame.fill_rectangle(
+                        iced::Point::from(
+                            (self.sticker.origin - dimensions / 2.0 - Vector::new(0.01, 0.01))
+                                .into_raw(bounds),
+                        ),
+                        iced::Size::from((dimensions + Vector::new(0.02, 0.02)).into_raw(bounds)),
+                        iced::Color::from(self.sticker.colour.secondary()),
+                    );
+                    frame.fill_rectangle(
+                        text_bounds.position(),
+                        text_bounds.size(),
+                        iced::Color::from(self.sticker.colour.primary()),
+                    );
+                });
+
+                frame.with_clip(text_bounds, |frame| {
+                    if text_bounds.height < 10.0 { // prevent 0 line height causes crashes
+                        return;
+                    }
+
+                    frame.translate(iced::Vector::new(text_bounds.x, text_bounds.y));
+                    let text = canvas::Text {
+                        content: rules
+                            .get(&self.id)
+                            .expect("rule loaded")
+                            .label()
+                            .to_string(),
+                        position: iced::Point::ORIGIN,
+                        max_width: text_bounds.width,
+                        size: Pixels::from(text_bounds.height / 6.0),
+                        wrapping: Wrapping::Word,
+                        ..Default::default()
+                    };
+                    text.draw_with(|path, color| frame.fill(&path, color));
+                });
+            }
             StickerKind::Memo => {
                 let text_bounds = iced::Rectangle::new(
                     iced::Point::from(
@@ -81,8 +134,6 @@ impl Entry {
                 });
             }
         }
-
-        frame
     }
 }
 

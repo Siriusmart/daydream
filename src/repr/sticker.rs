@@ -23,7 +23,12 @@ impl StickerColours {
     }
 
     pub fn secondary(&self) -> Colour {
-        self.secondary.unwrap_or(self.primary)
+        self.secondary.unwrap_or(Colour {
+            r: self.primary.r / 1.5,
+            g: self.primary.g / 1.5,
+            b: self.primary.b / 1.5,
+            a: self.primary.a,
+        })
     }
 }
 
@@ -32,4 +37,6 @@ impl StickerColours {
 pub enum StickerKind {
     #[serde(rename = "memo")]
     Memo,
+    #[serde(rename = "rect")]
+    Rect { width: f32, height: f32 },
 }
